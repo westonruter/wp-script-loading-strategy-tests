@@ -24,48 +24,65 @@
 
 namespace ScriptLoadingStrategyTests;
 
-add_action( 'wp_enqueue_scripts', static function () {
+add_action(
+	'wp_head',
+	static function () {
+		?>
+		<script>
+			const scriptEventLog = [];
+			document.addEventListener( 'DOMContentLoaded', () => {
+				scriptEventLog.push( 'document.DOMContentLoaded' );
+			} );
+			window.addEventListener( 'load', () => {
+				scriptEventLog.push( 'window.load' );
 
-	foreach ( [ '', 'async', 'defer' ] as $strategy ) {
+				const ol = document.querySelector( '#script-event-log ol' );
+				for ( const entry of scriptEventLog ) {
+					const li = document.createElement( 'li' );
+					li.textContent = entry;
+					ol.appendChild( li );
+				}
+			} );
+		</script>
+		<?php
+	},
+	0
+);
 
-		wp_enqueue_script(
-			$strategy,
-			plugin_dir_url( __FILE__ ) . "{$strategy}.js",
-			[],
-			false,
-			[ 'strategy' => $strategy ]
-		);
-		wp_add_inline_script(
-			$strategy,
-			sprintf( 'console.log( %s );', wp_json_encode( "$strategy before standalone!" ) ),
-			'before',
-			false
-		);
-		wp_add_inline_script(
-			$strategy,
-			sprintf( 'console.log( %s );', wp_json_encode( "$strategy after standalone!" ) ),
-			'after',
-			false
-		);
+add_action(
+	'wp_footer',
+	static function () {
+		?>
+		<style>
+		#script-event-log {
+			margin: 1em;
+		}
+		</style>
+		<div id="script-event-log">
+			<h2>Script Event Log</h2>
+			<ol></ol>
+		</div>
+		<?php
 	}
+);
 
-//
-//	wp_enqueue_script(
-//		'async',
-//		plugin_dir_url( __FILE__ ) . '/async.js',
-//		[],
-//		false,
-//		[
-//			'strategy' => 'async',
-//			'in_footer' => true,
-//		]
-//	);
-//	wp_enqueue_script(
-//		'defer',
-//		plugin_dir_url( __FILE__ ) . '/defer.js',
-//		[],
-//		false,
-//		[ 'strategy' => 'async' ]
-//	);
-
+add_action( 'wp_enqueue_scripts', static function () {
+	foreach ( [ 'blocking', 'async', 'defer' ] as $strategy ) {
+		$handle = "{$strategy}-head";
+		wp_enqueue_script(
+			$handle,
+			add_query_arg(
+				[
+					'script_event_log' => "$handle: script",
+				],
+				plugin_dir_url( __FILE__ ) . 'external.js'
+			),
+			[]
+		);
+		if ( 'blocking' !== $strategy ) {
+			wp_script_add_data( $handle, 'strategy', $strategy );
+		}
+		wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: before inline" ) ), 'before' );
+		wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: after inline" ) ), 'after' );
+	}
 } );
