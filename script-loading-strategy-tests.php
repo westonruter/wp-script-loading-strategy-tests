@@ -49,6 +49,14 @@ add_action(
 	0
 );
 
+/**
+ * Enqueue test script with before/after inline scripts.
+ *
+ * @param string   $handle    Dependency handle to enqueue.
+ * @param string   $strategy  Strategy to use for dependency.
+ * @param string[] $deps      Dependencies for the script.
+ * @param bool     $in_footer Whether to print the script in the footer.
+ */
 function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false ) {
 	wp_enqueue_script(
 		$handle,
@@ -67,20 +75,12 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: after inline" ) ), 'after' );
 }
 
-//add_action( 'wp_enqueue_scripts', static function () {
-//	foreach ( [ 'async', 'defer', 'blocking' ] as $strategy ) {
-//		enqueue_test_script( "{$strategy}-foo", $strategy, [], false );
-//	}
-//
-//	foreach ( [ /*'blocking', 'async',*/ 'defer' ] as $strategy ) {
-//		enqueue_test_script( "{$strategy}-bar", $strategy, [ "{$strategy}-foo" ], true );
-//	}
-//
-//	foreach ( [ /*'blocking', /*'async',*/ 'defer' ] as $strategy ) {
-//		enqueue_test_script( "{$strategy}-baz", $strategy, [ "{$strategy}-foo", "{$strategy}-bar" ], true );
-//	}
-//} );
-
+/**
+ * Checks whether a test is requested.
+ *
+ * @param string $test_id Test ID.
+ * @return bool Whether test requested.
+ */
 function is_test_requested( $test_id ) {
 	return ! isset( $_GET[ $test_id ] ) || rest_sanitize_boolean( $_GET[ $test_id ] );
 }
