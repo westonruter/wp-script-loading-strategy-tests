@@ -49,40 +49,108 @@ add_action(
 	0
 );
 
+function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false ) {
+	wp_enqueue_script(
+		$handle,
+		add_query_arg(
+			[
+				'script_event_log' => "$handle: script",
+			],
+			plugin_dir_url( __FILE__ ) . 'external.js'
+		),
+		$deps
+	);
+	if ( 'blocking' !== $strategy ) {
+		wp_script_add_data( $handle, 'strategy', $strategy );
+	}
+	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: before inline" ) ), 'before' );
+	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: after inline" ) ), 'after' );
+}
+
+//add_action( 'wp_enqueue_scripts', static function () {
+//	foreach ( [ 'async', 'defer', 'blocking' ] as $strategy ) {
+//		enqueue_test_script( "{$strategy}-foo", $strategy, [], false );
+//	}
+//
+//	foreach ( [ /*'blocking', 'async',*/ 'defer' ] as $strategy ) {
+//		enqueue_test_script( "{$strategy}-bar", $strategy, [ "{$strategy}-foo" ], true );
+//	}
+//
+//	foreach ( [ /*'blocking', /*'async',*/ 'defer' ] as $strategy ) {
+//		enqueue_test_script( "{$strategy}-baz", $strategy, [ "{$strategy}-foo", "{$strategy}-bar" ], true );
+//	}
+//} );
+
+function is_test_requested( $test_id ) {
+	return ! isset( $_GET[ $test_id ] ) || rest_sanitize_boolean( $_GET[ $test_id ] );
+}
+
+const TEST_ASYNC_WITH_ASYNC_DEPENDENCIES = 'async-with-async-dependencies';
+add_action( 'wp_enqueue_scripts', static function () {
+	if ( is_test_requested( TEST_ASYNC_WITH_ASYNC_DEPENDENCIES ) ) {
+		enqueue_test_script( 'async-no-dependency', 'async', [] );
+		enqueue_test_script( 'async-one-async-dependency', 'async', [ 'async-no-dependency' ] );
+		enqueue_test_script( 'async-two-async-dependencies', 'async', [ 'async-no-dependency', 'async-one-async-dependency' ] );
+	}
+} );
+
+const TEST_BLOCKING_WITH_ASYNC_DEPENDENCY = 'blocking-with-async-dependency';
+add_action( 'wp_enqueue_scripts', static function () {
+	if ( is_test_requested( TEST_BLOCKING_WITH_ASYNC_DEPENDENCY ) ) {
+		enqueue_test_script( 'blocking-not-async-without-dependency', 'blocking', [] );
+		enqueue_test_script( 'async-with-blocking-dependency', 'async', [ 'blocking-not-async-without-dependency' ] );
+	}
+} );
+
+const TEST_ASYNC_WITH_BLOCKING_DEPENDENCY = 'async-with-blocking-dependency';
+add_action( 'wp_enqueue_scripts', static function () {
+	if ( is_test_requested( TEST_ASYNC_WITH_BLOCKING_DEPENDENCY ) ) {
+		enqueue_test_script( 'async-with-blocking-dependent', 'async', [] );
+		enqueue_test_script( 'blocking-dependent-of-async', 'blocking', [ 'async-with-blocking-dependent' ] );
+	}
+} );
+
+const TEST_ASYNC_WITH_DEFER_DEPENDENT = 'async-with-defer-dependent';
+add_action( 'wp_enqueue_scripts', static function () {
+	if ( is_test_requested( TEST_ASYNC_WITH_DEFER_DEPENDENT ) ) {
+		enqueue_test_script( 'async-with-defer-dependent', 'async', [] );
+		enqueue_test_script( 'defer-dependent-of-async', 'defer', [ 'async-with-defer-dependent' ] );
+	}
+} );
+
+const TESTS = [
+	TEST_ASYNC_WITH_ASYNC_DEPENDENCIES,
+	TEST_BLOCKING_WITH_ASYNC_DEPENDENCY,
+	TEST_ASYNC_WITH_BLOCKING_DEPENDENCY,
+	TEST_ASYNC_WITH_DEFER_DEPENDENT,
+];
+
 add_action(
 	'wp_footer',
 	static function () {
 		?>
 		<style>
-		#script-event-log {
-			margin: 1em;
-		}
+			#script-event-log {
+				margin: 1em;
+			}
 		</style>
 		<div id="script-event-log">
-			<h2>Script Event Log</h2>
+			<h2>Script Loading Strategy Tests</h2>
+			<nav>
+				<ul>
+				<?php foreach ( TESTS as $test ) : ?>
+					<li>
+						<?php echo esc_html( $test ); ?>:
+						<a href="<?php echo esc_attr( add_query_arg( $test, wp_json_encode( ! is_test_requested( $test ) ) ) . '#script-event-log' ); ?>" title="<?php echo esc_attr( ! is_test_requested( $test ) ? 'disable' : 'enable' ); ?>">
+							<?php echo is_test_requested( $test ) ? 'enabled' : 'disabled'; ?>
+						</a>
+					</li>
+				<?php endforeach; ?>
+				</ul>
+			</nav>
+			Test Results:
 			<ol></ol>
 		</div>
 		<?php
 	}
 );
-
-add_action( 'wp_enqueue_scripts', static function () {
-	foreach ( [ 'blocking', 'async', 'defer' ] as $strategy ) {
-		$handle = "{$strategy}-head";
-		wp_enqueue_script(
-			$handle,
-			add_query_arg(
-				[
-					'script_event_log' => "$handle: script",
-				],
-				plugin_dir_url( __FILE__ ) . 'external.js'
-			),
-			[]
-		);
-		if ( 'blocking' !== $strategy ) {
-			wp_script_add_data( $handle, 'strategy', $strategy );
-		}
-		wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: before inline" ) ), 'before' );
-		wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: after inline" ) ), 'after' );
-	}
-} );
