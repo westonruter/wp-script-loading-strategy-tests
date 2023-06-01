@@ -113,26 +113,39 @@ function get_test_case_query_arg( $test_id ) {
 add_action(
 	'init',
 	static function () {
-		foreach ( get_test_cases() as $test_id => $test_file ) {
-			if ( is_test_enabled( $test_id ) ) {
-				require $test_file;
-			}
-		}
+
 	}
 );
 
 add_action(
 	'wp_head',
 	static function () {
+		$result_snapshots = [];
+		$seen_results = [];
+		foreach ( get_test_cases() as $test_id => $test_file ) {
+			if ( is_test_enabled( $test_id ) ) {
+				ob_start();
+				require $test_file;
+				$result_snapshot = preg_split( '/\n/', trim( ob_get_clean() ) );
+
+				$result_snapshots[ $test_id ] = $result_snapshot;
+			}
+		}
+
+
 		?>
 		<script>
 			const scriptEventLog = [];
+			const windowLoadResultValue = 'window.load';
+			const domReadyResultValue = 'document.DOMContentLoaded';
+
 			document.addEventListener( 'DOMContentLoaded', () => {
-				scriptEventLog.push( 'document.DOMContentLoaded' );
+				scriptEventLog.push( domReadyResultValue );
 			} );
 			window.addEventListener( 'load', () => {
-				scriptEventLog.push( 'window.load' );
+				scriptEventLog.push( windowLoadResultValue );
 
+				// @todo Now check snapshots.
 				const ol = document.querySelector( '#script-event-log ol' );
 				for ( const entry of scriptEventLog ) {
 					const li = document.createElement( 'li' );
