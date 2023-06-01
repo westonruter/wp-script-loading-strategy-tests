@@ -250,6 +250,9 @@ add_action(
 				<?php endforeach; ?>
 				</ul>
 			</nav>
+			<?php if ( isset( $_GET[ TEST_CASE_QUERY_ARG ] ) ) : ?>
+				<p><a href="<?php echo esc_attr( esc_url( remove_query_arg( TEST_CASE_QUERY_ARG ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>">Reset to initial state</a></p>
+			<?php endif; ?>
 			Test Results:
 			<ol></ol>
 		</div>
