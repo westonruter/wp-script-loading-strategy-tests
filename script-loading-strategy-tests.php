@@ -24,46 +24,10 @@
 
 namespace ScriptLoadingStrategyTests;
 
-add_action(
-	'init',
-	static function () {
-		foreach ( get_test_case_files() as $test_slug => $test_file ) {
-			if ( is_test_requested( $test_slug ) ) {
-				require $test_file;
-			}
-		}
-	}
-);
-
-add_action(
-	'wp_head',
-	static function () {
-		?>
-		<script>
-			const scriptEventLog = [];
-			document.addEventListener( 'DOMContentLoaded', () => {
-				scriptEventLog.push( 'document.DOMContentLoaded' );
-			} );
-			window.addEventListener( 'load', () => {
-				scriptEventLog.push( 'window.load' );
-
-				const ol = document.querySelector( '#script-event-log ol' );
-				for ( const entry of scriptEventLog ) {
-					const li = document.createElement( 'li' );
-					li.textContent = entry;
-					ol.appendChild( li );
-				}
-			} );
-		</script>
-		<?php
-	},
-	0
-);
-
 /**
  * Gets test case files.
  *
- * @return string[]
+ * @return string[] Test cases with keys being slugs and values being file paths.
  */
 function get_test_case_files() {
 	static $files = null;
@@ -112,6 +76,42 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 function is_test_requested( $test_id ) {
 	return ! isset( $_GET[ $test_id ] ) || rest_sanitize_boolean( $_GET[ $test_id ] );
 }
+
+add_action(
+	'init',
+	static function () {
+		foreach ( get_test_case_files() as $test_slug => $test_file ) {
+			if ( is_test_requested( $test_slug ) ) {
+				require $test_file;
+			}
+		}
+	}
+);
+
+add_action(
+	'wp_head',
+	static function () {
+		?>
+		<script>
+			const scriptEventLog = [];
+			document.addEventListener( 'DOMContentLoaded', () => {
+				scriptEventLog.push( 'document.DOMContentLoaded' );
+			} );
+			window.addEventListener( 'load', () => {
+				scriptEventLog.push( 'window.load' );
+
+				const ol = document.querySelector( '#script-event-log ol' );
+				for ( const entry of scriptEventLog ) {
+					const li = document.createElement( 'li' );
+					li.textContent = entry;
+					ol.appendChild( li );
+				}
+			} );
+		</script>
+		<?php
+	},
+	0
+);
 
 add_action(
 	'wp_footer',
