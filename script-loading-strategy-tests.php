@@ -26,6 +26,8 @@ namespace ScriptLoadingStrategyTests;
 
 const TEST_CASE_QUERY_ARG = 'test-case';
 
+const CONTAINER_ELEMENT_ID = 'script-event-log';
+
 /**
  * Gets test case files.
  *
@@ -155,7 +157,7 @@ add_action(
 				margin: 1em;
 			}
 		</style>
-		<div id="script-event-log">
+		<div id="<?php echo esc_attr( CONTAINER_ELEMENT_ID ); ?>">
 			<h2>Script Loading Strategy Tests</h2>
 			<nav>
 				<ul>
@@ -166,7 +168,7 @@ add_action(
 					<li>
 						<?php echo esc_html( $test_id ); ?>:
 						<a
-							href="<?php echo esc_attr( add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#script-event-log' ); ?>"
+							href="<?php echo esc_attr( esc_url( add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>"
 							title="<?php echo esc_attr( ! $is_enabled ? 'enable' : 'disable' ); ?>"
 						><?php echo $is_enabled ? 'enabled' : 'disabled'; ?></a>
 
@@ -178,7 +180,7 @@ add_action(
 							}
 							$args[ get_test_case_query_arg( $test_id ) ] = 'true';
 							?>
-							(<a href="<?php echo esc_attr( add_query_arg( $args ) ); ?>'#script-event-log" title="Enable test case in isolation from others">only</a>)
+							(<a href="<?php echo esc_attr( esc_url( add_query_arg( $args ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>'" title="Enable test case in isolation from others">only</a>)
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
