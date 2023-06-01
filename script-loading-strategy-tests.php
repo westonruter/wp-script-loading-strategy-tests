@@ -24,6 +24,8 @@
 
 namespace ScriptLoadingStrategyTests;
 
+const TEST_CASE_QUERY_ARG = 'test-case';
+
 /**
  * Gets test case files.
  *
@@ -74,7 +76,36 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
  * @return bool Whether test requested.
  */
 function is_test_requested( $test_id ) {
-	return ! isset( $_GET[ $test_id ] ) || rest_sanitize_boolean( $_GET[ $test_id ] );
+	return (
+		! isset( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
+		||
+		rest_sanitize_boolean( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
+	);
+}
+
+/**
+ * Checks if another test was requested.
+ *
+ * @param string $test_id Test ID.
+ * @return bool Whether another test was requested.
+ */
+function is_another_test_requested( $test_id ) {
+	foreach ( array_diff( array_keys( get_test_case_files() ), [ $test_id ] ) as $other_test_id ) {
+		if ( is_test_requested( $other_test_id ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Gets the query arg name for a given test.
+ *
+ * @param string $test_id Test ID.
+ * @return string Query arg key.
+ */
+function get_test_case_query_arg( $test_id ) {
+	return sprintf( '%s[%s]', TEST_CASE_QUERY_ARG, $test_id );
 }
 
 add_action(
@@ -116,6 +147,8 @@ add_action(
 add_action(
 	'wp_footer',
 	static function () {
+		$test_cases = array_keys( get_test_case_files() );
+
 		?>
 		<style>
 			#script-event-log {
@@ -126,15 +159,27 @@ add_action(
 			<h2>Script Loading Strategy Tests</h2>
 			<nav>
 				<ul>
-				<?php foreach ( array_keys( get_test_case_files() ) as $test ) : ?>
+				<?php foreach ( $test_cases as $test_id ) : ?>
+					<?php
+					$is_enabled = is_test_requested( $test_id );
+					?>
 					<li>
-						<?php echo esc_html( $test ); ?>:
+						<?php echo esc_html( $test_id ); ?>:
 						<a
-							href="<?php echo esc_attr( add_query_arg( $test, wp_json_encode( ! is_test_requested( $test ) ) ) . '#script-event-log' ); ?>"
-							title="<?php echo esc_attr( ! is_test_requested( $test ) ? 'disable' : 'enable' ); ?>"
-						>
-							<?php echo is_test_requested( $test ) ? 'enabled' : 'disabled'; ?>
-						</a>
+							href="<?php echo esc_attr( add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#script-event-log' ); ?>"
+							title="<?php echo esc_attr( ! $is_enabled ? 'enable' : 'disable' ); ?>"
+						><?php echo $is_enabled ? 'enabled' : 'disabled'; ?></a>
+
+						<?php if ( ! $is_enabled || is_another_test_requested( $test_id ) ): ?>
+							<?php
+							$args = [];
+							foreach ( array_diff( $test_cases, [ $test_id ] ) as $other_test_id ) {
+								$args[ get_test_case_query_arg( $other_test_id ) ] = 'false';
+							}
+							$args[ get_test_case_query_arg( $test_id ) ] = 'true';
+							?>
+							(<a href="<?php echo esc_attr( add_query_arg( $args ) ); ?>'#script-event-log" title="Enable test case in isolation from others">only</a>)
+						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
 				</ul>
