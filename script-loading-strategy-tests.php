@@ -25,6 +25,17 @@
 namespace ScriptLoadingStrategyTests;
 
 add_action(
+	'init',
+	static function () {
+		foreach ( get_test_case_files() as $test_slug => $test_file ) {
+			if ( is_test_requested( $test_slug ) ) {
+				require $test_file;
+			}
+		}
+	}
+);
+
+add_action(
 	'wp_head',
 	static function () {
 		?>
@@ -48,6 +59,23 @@ add_action(
 	},
 	0
 );
+
+/**
+ * Gets test case files.
+ *
+ * @return string[]
+ */
+function get_test_case_files() {
+	static $files = null;
+	if ( null === $files ) {
+		$files = [];
+		foreach( glob( __DIR__ . '/cases/*.php' ) as $file ) {
+			$slug = basename( $file, '.php' );
+			$files[ $slug ] = $file;
+		}
+	}
+	return $files;
+}
 
 /**
  * Enqueue test script with before/after inline scripts.
@@ -85,46 +113,6 @@ function is_test_requested( $test_id ) {
 	return ! isset( $_GET[ $test_id ] ) || rest_sanitize_boolean( $_GET[ $test_id ] );
 }
 
-const TEST_ASYNC_WITH_ASYNC_DEPENDENCIES = 'async-with-async-dependencies';
-add_action( 'wp_enqueue_scripts', static function () {
-	if ( is_test_requested( TEST_ASYNC_WITH_ASYNC_DEPENDENCIES ) ) {
-		enqueue_test_script( 'async-no-dependency', 'async', [] );
-		enqueue_test_script( 'async-one-async-dependency', 'async', [ 'async-no-dependency' ] );
-		enqueue_test_script( 'async-two-async-dependencies', 'async', [ 'async-no-dependency', 'async-one-async-dependency' ] );
-	}
-} );
-
-const TEST_BLOCKING_WITH_ASYNC_DEPENDENCY = 'blocking-with-async-dependency';
-add_action( 'wp_enqueue_scripts', static function () {
-	if ( is_test_requested( TEST_BLOCKING_WITH_ASYNC_DEPENDENCY ) ) {
-		enqueue_test_script( 'blocking-not-async-without-dependency', 'blocking', [] );
-		enqueue_test_script( 'async-with-blocking-dependency', 'async', [ 'blocking-not-async-without-dependency' ] );
-	}
-} );
-
-const TEST_ASYNC_WITH_BLOCKING_DEPENDENCY = 'async-with-blocking-dependency';
-add_action( 'wp_enqueue_scripts', static function () {
-	if ( is_test_requested( TEST_ASYNC_WITH_BLOCKING_DEPENDENCY ) ) {
-		enqueue_test_script( 'async-with-blocking-dependent', 'async', [] );
-		enqueue_test_script( 'blocking-dependent-of-async', 'blocking', [ 'async-with-blocking-dependent' ] );
-	}
-} );
-
-const TEST_ASYNC_WITH_DEFER_DEPENDENT = 'async-with-defer-dependent';
-add_action( 'wp_enqueue_scripts', static function () {
-	if ( is_test_requested( TEST_ASYNC_WITH_DEFER_DEPENDENT ) ) {
-		enqueue_test_script( 'async-with-defer-dependent', 'async', [] );
-		enqueue_test_script( 'defer-dependent-of-async', 'defer', [ 'async-with-defer-dependent' ] );
-	}
-} );
-
-const TESTS = [
-	TEST_ASYNC_WITH_ASYNC_DEPENDENCIES,
-	TEST_BLOCKING_WITH_ASYNC_DEPENDENCY,
-	TEST_ASYNC_WITH_BLOCKING_DEPENDENCY,
-	TEST_ASYNC_WITH_DEFER_DEPENDENT,
-];
-
 add_action(
 	'wp_footer',
 	static function () {
@@ -138,10 +126,13 @@ add_action(
 			<h2>Script Loading Strategy Tests</h2>
 			<nav>
 				<ul>
-				<?php foreach ( TESTS as $test ) : ?>
+				<?php foreach ( array_keys( get_test_case_files() ) as $test ) : ?>
 					<li>
 						<?php echo esc_html( $test ); ?>:
-						<a href="<?php echo esc_attr( add_query_arg( $test, wp_json_encode( ! is_test_requested( $test ) ) ) . '#script-event-log' ); ?>" title="<?php echo esc_attr( ! is_test_requested( $test ) ? 'disable' : 'enable' ); ?>">
+						<a
+							href="<?php echo esc_attr( add_query_arg( $test, wp_json_encode( ! is_test_requested( $test ) ) ) . '#script-event-log' ); ?>"
+							title="<?php echo esc_attr( ! is_test_requested( $test ) ? 'disable' : 'enable' ); ?>"
+						>
 							<?php echo is_test_requested( $test ) ? 'enabled' : 'disabled'; ?>
 						</a>
 					</li>
