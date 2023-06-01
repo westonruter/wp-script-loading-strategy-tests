@@ -14,5 +14,3 @@ async-with-defer-dependent: after inline
 defer-dependent-of-async: before inline
 defer-dependent-of-async: script
 defer-dependent-of-async: after inline
-document.DOMContentLoaded
-window.load

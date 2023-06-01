@@ -14,5 +14,3 @@ blocking-not-async-without-dependency: after inline
 async-with-blocking-dependency: before inline
 async-with-blocking-dependency: script
 async-with-blocking-dependency: after inline
-document.DOMContentLoaded
-window.load
