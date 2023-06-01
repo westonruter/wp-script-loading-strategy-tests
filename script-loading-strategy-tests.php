@@ -29,17 +29,17 @@ const TEST_CASE_QUERY_ARG = 'test-case';
 const CONTAINER_ELEMENT_ID = 'script-event-log';
 
 /**
- * Gets test case files.
+ * Gets test cases.
  *
  * @return string[] Test cases with keys being slugs and values being file paths.
  */
-function get_test_case_files() {
+function get_test_cases() {
 	static $files = null;
 	if ( null === $files ) {
 		$files = [];
 		foreach( glob( __DIR__ . '/cases/*.php' ) as $file ) {
-			$slug = basename( $file, '.php' );
-			$files[ $slug ] = $file;
+			$id = basename( $file, '.php' );
+			$files[ $id ] = $file;
 		}
 	}
 	return $files;
@@ -72,12 +72,12 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 }
 
 /**
- * Checks whether a test is requested.
+ * Checks whether a test is enabled.
  *
  * @param string $test_id Test ID.
  * @return bool Whether test requested.
  */
-function is_test_requested( $test_id ) {
+function is_test_enabled( $test_id ) {
 	return (
 		! isset( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
 		||
@@ -86,14 +86,14 @@ function is_test_requested( $test_id ) {
 }
 
 /**
- * Checks if another test was requested.
+ * Checks if another test is enabled.
  *
  * @param string $test_id Test ID.
  * @return bool Whether another test was requested.
  */
 function is_another_test_requested( $test_id ) {
-	foreach ( array_diff( array_keys( get_test_case_files() ), [ $test_id ] ) as $other_test_id ) {
-		if ( is_test_requested( $other_test_id ) ) {
+	foreach ( array_diff( array_keys( get_test_cases() ), [ $test_id ] ) as $other_test_id ) {
+		if ( is_test_enabled( $other_test_id ) ) {
 			return true;
 		}
 	}
@@ -113,8 +113,8 @@ function get_test_case_query_arg( $test_id ) {
 add_action(
 	'init',
 	static function () {
-		foreach ( get_test_case_files() as $test_slug => $test_file ) {
-			if ( is_test_requested( $test_slug ) ) {
+		foreach ( get_test_cases() as $test_id => $test_file ) {
+			if ( is_test_enabled( $test_id ) ) {
 				require $test_file;
 			}
 		}
@@ -149,7 +149,7 @@ add_action(
 add_action(
 	'wp_footer',
 	static function () {
-		$test_cases = array_keys( get_test_case_files() );
+		$test_ids = array_keys( get_test_cases() );
 
 		?>
 		<style>
@@ -161,26 +161,30 @@ add_action(
 			<h2>Script Loading Strategy Tests</h2>
 			<nav>
 				<ul>
-				<?php foreach ( $test_cases as $test_id ) : ?>
+				<?php foreach ( $test_ids as $test_id ) : ?>
 					<?php
-					$is_enabled = is_test_requested( $test_id );
+					$is_enabled = is_test_enabled( $test_id );
 					?>
 					<li>
 						<?php echo esc_html( $test_id ); ?>:
+						<?php
+						$href = add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID;
+						?>
 						<a
-							href="<?php echo esc_attr( esc_url( add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>"
+							href="<?php echo esc_attr( esc_url( $href ) ); ?>"
 							title="<?php echo esc_attr( ! $is_enabled ? 'enable' : 'disable' ); ?>"
 						><?php echo $is_enabled ? 'enabled' : 'disabled'; ?></a>
 
 						<?php if ( ! $is_enabled || is_another_test_requested( $test_id ) ): ?>
 							<?php
 							$args = [];
-							foreach ( array_diff( $test_cases, [ $test_id ] ) as $other_test_id ) {
+							foreach ( array_diff( $test_ids, [ $test_id ] ) as $other_test_id ) {
 								$args[ get_test_case_query_arg( $other_test_id ) ] = 'false';
 							}
 							$args[ get_test_case_query_arg( $test_id ) ] = 'true';
+							$href = add_query_arg( $args ) . '#' . CONTAINER_ELEMENT_ID;
 							?>
-							(<a href="<?php echo esc_attr( esc_url( add_query_arg( $args ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>'" title="Enable test case in isolation from others">only</a>)
+							(<a href="<?php echo esc_attr( esc_url( $href ) ); ?>" title="Enable test case in isolation from others (useful for grabbing snapshot)">only</a>)
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
