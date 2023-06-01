@@ -111,27 +111,23 @@ function get_test_case_query_arg( $test_id ) {
 }
 
 add_action(
-	'init',
-	static function () {
-
-	}
-);
-
-add_action(
 	'wp_head',
 	static function () {
-		$result_snapshots = [];
-		$seen_results = [];
+		$test_snapshots = [];
 		foreach ( get_test_cases() as $test_id => $test_file ) {
 			if ( is_test_enabled( $test_id ) ) {
 				ob_start();
 				require $test_file;
-				$result_snapshot = preg_split( '/\n/', trim( ob_get_clean() ) );
-
-				$result_snapshots[ $test_id ] = $result_snapshot;
+				$test_snapshot_raw = trim( ob_get_clean() );
+				if ( empty( $test_snapshot_raw ) ) {
+					$test_snapshot = null;
+				} else {
+					$test_snapshot = preg_split( '/\n/', $test_snapshot_raw );
+				}
+				$test_snapshots[ $test_id ] = $test_snapshot;
+				unset( $test_snapshot );
 			}
 		}
-
 
 		?>
 		<script>
@@ -145,12 +141,57 @@ add_action(
 			window.addEventListener( 'load', () => {
 				scriptEventLog.push( windowLoadResultValue );
 
-				// @todo Now check snapshots.
+				const testSnapshots = {};
+				Object.assign( testSnapshots, <?php echo wp_json_encode( $test_snapshots ) ?> );
+				console.log(testSnapshots)
+				const latestTestSnapshotResultIndex = {};
+
+				const seenSnapshotEntries = new Set();
+
 				const ol = document.querySelector( '#script-event-log ol' );
 				for ( const entry of scriptEventLog ) {
 					const li = document.createElement( 'li' );
-					li.textContent = entry;
 					ol.appendChild( li );
+
+					// Include DOMContentLoaded and window load events in the log, but prevent them from being copied since they are not part of the snapshot.
+					if ( entry === domReadyResultValue || entry === windowLoadResultValue ) {
+						li.inert = true;
+						li.textContent = `⏲ ${entry}`;
+						continue;
+					}
+
+					li.textContent = entry;
+					for ( const [ testId, testSnapshot ] of Object.entries( testSnapshots ) ) {
+						const index = testSnapshot.indexOf( entry );
+						if ( index === -1 ) {
+							continue;
+						}
+
+						let pass = false;
+						if ( testId in latestTestSnapshotResultIndex ) {
+							// Verify that this entry is the next entry in the snapshot for this test.
+							pass = index === latestTestSnapshotResultIndex[ testId ] + 1;
+						} else if ( index === 0 ) {
+							// If this is the first time we've encountered an entry from this test's snapshot and it's in the first position, we're good.
+							pass = true;
+						}
+						latestTestSnapshotResultIndex[ testId ] = index;
+
+						const resultSpan = document.createElement( 'span' );
+						resultSpan.inert = true;
+						resultSpan.textContent = ( pass ? '✅' : '❌' ) + ' ';
+						li.prepend( resultSpan );
+					}
+
+					// Add edge-case check.
+					if ( seenSnapshotEntries.has( entry ) ) {
+						const warning = document.createElement( 'em' );
+						warning.className = 'warning';
+						warning.inert = true;
+						warning.textContent = ' Warning! Duplicate snapshot entry encountered!';
+						li.append( warning );
+					}
+					seenSnapshotEntries.add( entry );
 				}
 			} );
 		</script>
@@ -168,6 +209,9 @@ add_action(
 		<style>
 			#script-event-log {
 				margin: 1em;
+			}
+			#script-event-log .warning {
+				color: red;
 			}
 		</style>
 		<div id="<?php echo esc_attr( CONTAINER_ELEMENT_ID ); ?>">
