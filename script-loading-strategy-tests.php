@@ -166,14 +166,15 @@ add_action(
 					$is_enabled = is_test_enabled( $test_id );
 					?>
 					<li>
-						<?php echo esc_html( $test_id ); ?>:
 						<?php
+						echo ( $is_enabled ? '🟩' : '🟥' ) . ' ';
+						echo esc_html( $test_id );
+						echo ': ';
 						$href = add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID;
 						?>
 						<a
 							href="<?php echo esc_attr( esc_url( $href ) ); ?>"
-							title="<?php echo esc_attr( ! $is_enabled ? 'enable' : 'disable' ); ?>"
-						><?php echo $is_enabled ? 'enabled' : 'disabled'; ?></a>
+						><?php echo $is_enabled ? 'disable' : 'enable'; ?></a>
 
 						<?php if ( ! $is_enabled || is_another_test_requested( $test_id ) ): ?>
 							<?php
@@ -183,8 +184,10 @@ add_action(
 							}
 							$args[ get_test_case_query_arg( $test_id ) ] = 'true';
 							$href = add_query_arg( $args ) . '#' . CONTAINER_ELEMENT_ID;
+
+							$label = $is_enabled ? 'enable alone' : 'alone';
 							?>
-							(<a href="<?php echo esc_attr( esc_url( $href ) ); ?>" title="Enable test case in isolation from others (useful for grabbing snapshot)">only</a>)
+							(<a href="<?php echo esc_attr( esc_url( $href ) ); ?>" title="Enable test case in isolation from others (useful for grabbing snapshot)"><?php echo esc_html( $label ); ?></a>)
 						<?php endif; ?>
 					</li>
 				<?php endforeach; ?>
