@@ -223,7 +223,7 @@ add_action(
 					?>
 					<li>
 						<?php
-						echo ( $is_enabled ? '🟩' : '🟥' ) . ' ';
+						echo ( $is_enabled ? '🟩' : '⬜' ) . ' ';
 						echo esc_html( $test_id );
 						echo ': ';
 						$href = add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID;
