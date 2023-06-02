@@ -138,7 +138,7 @@ add_action(
 				if ( empty( $test_snapshot_raw ) ) {
 					$test_snapshot = null;
 				} else {
-					$test_snapshot = preg_split( '/\n/', $test_snapshot_raw );
+					$test_snapshot = preg_split( '/\n+/', $test_snapshot_raw );
 				}
 				$test_snapshots[ $test_id ] = $test_snapshot;
 				unset( $test_snapshot );
