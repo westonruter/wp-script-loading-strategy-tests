@@ -173,7 +173,11 @@ add_action(
 					// Include DOMContentLoaded and window load events in the log, but prevent them from being copied since they are not part of the snapshot.
 					if ( entry === domReadyResultValue || entry === windowLoadResultValue ) {
 						li.inert = true;
-						li.textContent = `⏲ ${entry}`;
+						li.textContent = `${entry}`;
+						const emoji = document.createElement( 'span' );
+						emoji.className = 'emoji';
+						emoji.textContent = '⏲ ';
+						li.prepend( emoji );
 						continue;
 					}
 
