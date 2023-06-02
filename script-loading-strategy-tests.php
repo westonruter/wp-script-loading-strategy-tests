@@ -143,7 +143,6 @@ add_action(
 
 				const testSnapshots = {};
 				Object.assign( testSnapshots, <?php echo wp_json_encode( $test_snapshots ) ?> );
-				console.log(testSnapshots)
 				const latestTestSnapshotResultIndex = {};
 
 				const seenSnapshotEntries = new Set();
