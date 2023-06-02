@@ -67,8 +67,18 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 	if ( 'blocking' !== $strategy ) {
 		wp_script_add_data( $handle, 'strategy', $strategy );
 	}
-	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: before inline" ) ), 'before' );
-	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: after inline" ) ), 'after' );
+	add_test_inline_script( $handle, 'before' );
+	add_test_inline_script( $handle, 'after' );
+}
+
+/**
+ * Adds test inline script.
+ *
+ * @param string $handle   Dependency handle to enqueue.
+ * @param string $position Position.
+ */
+function add_test_inline_script( $handle, $position ) {
+	wp_add_inline_script( $handle, sprintf( 'scriptEventLog.push( %s )', wp_json_encode( "{$handle}: {$position} inline" ) ), $position );
 }
 
 /**
