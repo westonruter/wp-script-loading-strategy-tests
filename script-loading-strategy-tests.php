@@ -86,12 +86,28 @@ function is_test_enabled( $test_id ) {
 }
 
 /**
+ * Get enabled tests.
+ *
+ * @return string[] Test IDs.
+ */
+function get_enabled_tests() {
+	return array_values(
+		array_filter(
+			array_keys( get_test_cases() ),
+			static function ( $test_id ) {
+				return is_test_enabled( $test_id );
+			}
+		)
+	);
+}
+
+/**
  * Checks if another test is enabled.
  *
  * @param string $test_id Test ID.
  * @return bool Whether another test was requested.
  */
-function is_another_test_requested( $test_id ) {
+function is_another_test_enabled( $test_id ) {
 	foreach ( array_diff( array_keys( get_test_cases() ), [ $test_id ] ) as $other_test_id ) {
 		if ( is_test_enabled( $other_test_id ) ) {
 			return true;
@@ -144,6 +160,8 @@ add_action(
 				const testSnapshots = {};
 				Object.assign( testSnapshots, <?php echo wp_json_encode( $test_snapshots ) ?> );
 				const latestTestSnapshotResultIndex = {};
+				const enabledTests = [];
+				Array.prototype.push.apply( enabledTests, <?php echo wp_json_encode( get_enabled_tests() ); ?> );
 
 				const seenSnapshotEntries = new Set();
 
@@ -159,6 +177,7 @@ add_action(
 						continue;
 					}
 
+					let matchedCount = 0;
 					li.textContent = entry;
 					for ( const [ testId, testSnapshot ] of Object.entries( testSnapshots ) ) {
 						const index = testSnapshot.indexOf( entry );
@@ -178,8 +197,24 @@ add_action(
 
 						const resultSpan = document.createElement( 'span' );
 						resultSpan.inert = true;
-						resultSpan.textContent = ( pass ? '✅' : '❌' ) + ' ';
+						resultSpan.className = 'emoji';
+						resultSpan.textContent = ( pass ? '✅' : '❌' );
+						li.prepend( document.createTextNode( ' ' ) );
 						li.prepend( resultSpan );
+						matchedCount++;
+					}
+					if ( matchedCount !== 1 || seenSnapshotEntries.has( entry ) ) {
+						const resultSpan = document.createElement( 'span' );
+						resultSpan.inert = true;
+						resultSpan.className = 'emoji';
+						resultSpan.textContent = '⚠ ';
+						li.prepend( resultSpan );
+
+						const warning = document.createElement( 'em' );
+						warning.className = 'warning';
+						warning.inert = true;
+						warning.textContent = ' Warning! Entry not contained in snapshot!';
+						li.append( warning );
 					}
 
 					// Add edge-case check.
@@ -191,6 +226,22 @@ add_action(
 						li.append( warning );
 					}
 					seenSnapshotEntries.add( entry );
+				}
+
+				for ( const enabledTestId of enabledTests ) {
+					for ( const snapshotEntry of testSnapshots[ enabledTestId ] ) {
+						if ( -1 === scriptEventLog.indexOf( snapshotEntry ) ) {
+							const li = document.createElement( 'li' );
+							li.className = 'error';
+							li.inert = true;
+							li.textContent = ` Error: Missing '${snapshotEntry}' snapshot entry for test '${enabledTestId}'`;
+							const emoji = document.createElement( 'span' );
+							emoji.className = 'emoji';
+							emoji.textContent = '⚠ ';
+							li.prepend( emoji );
+							ol.appendChild(li);
+						}
+					}
 				}
 			} );
 		</script>
@@ -205,12 +256,19 @@ add_action(
 		$test_ids = array_keys( get_test_cases() );
 
 		?>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Color+Emoji">
 		<style>
 			#script-event-log {
 				margin: 1em;
 			}
 			#script-event-log .warning {
+				color: orange;
+			}
+			#script-event-log .error {
 				color: red;
+			}
+			#script-event-log .emoji {
+				font-family: "Noto Color Emoji";
 			}
 		</style>
 		<div id="<?php echo esc_attr( CONTAINER_ELEMENT_ID ); ?>">
@@ -223,7 +281,7 @@ add_action(
 					?>
 					<li>
 						<?php
-						echo ( $is_enabled ? '🟩' : '⬜' ) . ' ';
+						echo ( $is_enabled ? '<span class="emoji">🟩</span>' : '<span class="emoji">⬜</span>' ) . ' ';
 						echo esc_html( $test_id );
 						echo ': ';
 						$href = add_query_arg( get_test_case_query_arg( $test_id ), wp_json_encode( ! $is_enabled ) ) . '#' . CONTAINER_ELEMENT_ID;
@@ -232,7 +290,7 @@ add_action(
 							href="<?php echo esc_attr( esc_url( $href ) ); ?>"
 						><?php echo $is_enabled ? 'disable' : 'enable'; ?></a>
 
-						<?php if ( ! $is_enabled || is_another_test_requested( $test_id ) ): ?>
+						<?php if ( ! $is_enabled || is_another_test_enabled( $test_id ) ): ?>
 							<?php
 							$args = [];
 							foreach ( array_diff( $test_ids, [ $test_id ] ) as $other_test_id ) {
