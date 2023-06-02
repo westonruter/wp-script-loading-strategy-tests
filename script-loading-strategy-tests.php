@@ -207,6 +207,7 @@ add_action(
 						li.prepend( resultSpan );
 						matchedCount++;
 					}
+
 					if ( matchedCount !== 1 || seenSnapshotEntries.has( entry ) ) {
 						const resultSpan = document.createElement( 'span' );
 						resultSpan.inert = true;
@@ -217,18 +218,16 @@ add_action(
 						const warning = document.createElement( 'em' );
 						warning.className = 'warning';
 						warning.inert = true;
-						warning.textContent = ' Warning! Entry not contained in snapshot!';
 						li.append( warning );
+						if ( matchedCount === 0 ) {
+							warning.textContent = ' Warning! Entry not contained in snapshot!';
+						} else if ( matchedCount > 1 ) {
+							warning.textContent = ' Warning! Entry contained in multiple snapshots!';
+						} else {
+							warning.textContent = ' Warning! Duplicate snapshot entry encountered!';
+						}
 					}
 
-					// Add edge-case check.
-					if ( seenSnapshotEntries.has( entry ) ) {
-						const warning = document.createElement( 'em' );
-						warning.className = 'warning';
-						warning.inert = true;
-						warning.textContent = ' Warning! Duplicate snapshot entry encountered!';
-						li.append( warning );
-					}
 					seenSnapshotEntries.add( entry );
 				}
 
