@@ -266,6 +266,11 @@ add_action(
 						}
 					}
 				}
+
+				const nextAloneLink = document.getElementById( 'script-loading-strategy-next-alone-link' );
+				if ( nextAloneLink ) {
+					nextAloneLink.focus();
+				}
 			} );
 		</script>
 		<?php
@@ -342,8 +347,15 @@ add_action(
 						if ( $index < count( $all_tests ) - 1 ) {
 							$next_alone_test = $all_tests[ $index + 1 ];
 							printf(
-								'<a href="%s">Next alone: %s</a>',
-								esc_url( add_query_arg( get_test_case_query_arg( $next_alone_test ), 'true', remove_query_arg( TEST_CASE_QUERY_ARG ) ) . '#' . CONTAINER_ELEMENT_ID ),
+								'<a href="%s" id="script-loading-strategy-next-alone-link">Next alone: %s</a>',
+								esc_url(
+									add_query_arg(
+										[
+											get_test_case_query_arg( $next_alone_test ) => 'true',
+										],
+										remove_query_arg( TEST_CASE_QUERY_ARG )
+									) . '#' . CONTAINER_ELEMENT_ID
+								),
 								$next_alone_test
 							);
 							echo ' | ';
