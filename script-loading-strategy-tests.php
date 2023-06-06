@@ -215,6 +215,12 @@ add_action(
 						resultSpan.textContent = ( pass ? '✅' : '❌' );
 						li.prepend( document.createTextNode( ' ' ) );
 						li.prepend( resultSpan );
+
+						const caseId = document.createElement( 'code' );
+						caseId.inert = true;
+						caseId.className = 'test-id';
+						caseId.textContent = testId;
+						li.append( caseId );
 						matchedCount++;
 					}
 
@@ -282,6 +288,14 @@ add_action(
 			}
 			#script-event-log .emoji {
 				font-family: "Noto Color Emoji";
+			}
+			#script-event-log .test-id {
+				font-size: small;
+				padding: 3px;
+				border-radius: 6px;
+				margin-left: 2ex;
+				color: #fff;
+				background: #999;
 			}
 		</style>
 		<div id="<?php echo esc_attr( CONTAINER_ELEMENT_ID ); ?>">
