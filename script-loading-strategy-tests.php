@@ -88,9 +88,13 @@ function add_test_inline_script( $handle, $position ) {
  * @return bool Whether test requested.
  */
 function is_test_enabled( $test_id ) {
+	// All enabled by default.
+	if ( empty( $_GET[ TEST_CASE_QUERY_ARG ] ) ) {
+		return true;
+	}
 	return (
-		! isset( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
-		||
+		isset( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
+		&&
 		rest_sanitize_boolean( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
 	);
 }
@@ -319,13 +323,7 @@ add_action(
 
 						<?php if ( ! $is_enabled || is_another_test_enabled( $test_id ) ): ?>
 							<?php
-							$args = [];
-							foreach ( array_diff( $test_ids, [ $test_id ] ) as $other_test_id ) {
-								$args[ get_test_case_query_arg( $other_test_id ) ] = 'false';
-							}
-							$args[ get_test_case_query_arg( $test_id ) ] = 'true';
-							$href = add_query_arg( $args ) . '#' . CONTAINER_ELEMENT_ID;
-
+							$href  = add_query_arg( get_test_case_query_arg( $test_id ), 'true', remove_query_arg( TEST_CASE_QUERY_ARG ) ) . '#' . CONTAINER_ELEMENT_ID;
 							$label = $is_enabled ? 'enable alone' : 'alone';
 							?>
 							(<a href="<?php echo esc_attr( esc_url( $href ) ); ?>" title="Enable test case in isolation from others (useful for grabbing snapshot)"><?php echo esc_html( $label ); ?></a>)
@@ -335,7 +333,27 @@ add_action(
 				</ul>
 			</nav>
 			<?php if ( isset( $_GET[ TEST_CASE_QUERY_ARG ] ) ) : ?>
-				<p><a href="<?php echo esc_attr( esc_url( remove_query_arg( TEST_CASE_QUERY_ARG ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>">Reset to initial state</a></p>
+				<p>
+					<?php
+					$all_tests     = array_keys( get_test_cases() );
+					$enabled_tests = get_enabled_tests();
+					if ( count( $enabled_tests ) === 1 ) {
+						$index = array_search( $enabled_tests[0], $all_tests );
+						if ( $index < count( $all_tests ) - 1 ) {
+							$next_alone_test = $all_tests[ $index + 1 ];
+							printf(
+								'<a href="%s">Next alone: %s</a>',
+								esc_url( add_query_arg( get_test_case_query_arg( $next_alone_test ), 'true', remove_query_arg( TEST_CASE_QUERY_ARG ) ) . '#' . CONTAINER_ELEMENT_ID ),
+								$next_alone_test
+							);
+							echo ' | ';
+						}
+					}
+					?>
+					<?php if ( count( $enabled_tests ) === 1 ) : ?>
+					<?php endif; ?>
+					<a href="<?php echo esc_attr( esc_url( remove_query_arg( TEST_CASE_QUERY_ARG ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>">Enable all</a>
+				</p>
 			<?php endif; ?>
 			Test Results:
 			<ol></ol>
