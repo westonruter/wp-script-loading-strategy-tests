@@ -4,7 +4,7 @@ namespace ScriptLoadingStrategyTests;
 add_action( 'wp_enqueue_scripts', static function () {
 	enqueue_test_script( 'defer-dependency-with-blocking-following-dependency', 'defer', [] );
 	enqueue_test_script( 'blocking-dependency-with-defer-preceding-dependency', 'blocking', [] );
-	enqueue_test_script( 'defer-dependent-of-blocking-and-defer-dependencies', 'defer', [ 'defer-dependency-with-blocking-following-dependency', 'blocking-dependency-with-defer-preceding-dependency' ] );
+	enqueue_test_script( 'defer-dependent-of-defer-and-blocking-dependencies', 'defer', [ 'defer-dependency-with-blocking-following-dependency', 'blocking-dependency-with-defer-preceding-dependency' ] );
 } );
 
 // Snapshot of output below:
@@ -15,6 +15,6 @@ blocking-dependency-with-defer-preceding-dependency: script
 blocking-dependency-with-defer-preceding-dependency: after inline
 defer-dependency-with-blocking-following-dependency: script
 defer-dependency-with-blocking-following-dependency: after inline
-defer-dependent-of-blocking-and-defer-dependencies: before inline
-defer-dependent-of-blocking-and-defer-dependencies: script
-defer-dependent-of-blocking-and-defer-dependencies: after inline
+defer-dependent-of-defer-and-blocking-dependencies: before inline
+defer-dependent-of-defer-and-blocking-dependencies: script
+defer-dependent-of-defer-and-blocking-dependencies: after inline
