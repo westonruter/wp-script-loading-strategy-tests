@@ -5,12 +5,12 @@ add_action( 'wp_enqueue_scripts', static function () {
 
 	// Note that jQuery is registered like this.
 	wp_register_script( 'blocking-bundle-of-two', false, [], null );
-	enqueue_test_script( 'blocking-bundle-member-one', 'blocking', [ 'blocking-bundle-of-two' ] );
-	enqueue_test_script( 'blocking-bundle-member-two', 'blocking', [ 'blocking-bundle-of-two' ] );
+	enqueue_test_script_with_inline_scripts( 'blocking-bundle-member-one', 'blocking', [ 'blocking-bundle-of-two' ] );
+	enqueue_test_script_with_inline_scripts( 'blocking-bundle-member-two', 'blocking', [ 'blocking-bundle-of-two' ] );
 
 	// Note: the before script for this will be blocking because the dependency is blocking.
 	// TODO: What if one of the bundle members is non-blocking? What if one is non-blocking and the other is blocking? What if the bundle itself is marked as non-blocking?
-	enqueue_test_script( 'defer-dependent-of-blocking-bundle-of-two', 'defer', [ 'blocking-bundle-of-two' ] );
+	enqueue_test_script_with_inline_scripts( 'defer-dependent-of-blocking-bundle-of-two', 'defer', [ 'blocking-bundle-of-two' ] );
 } );
 
 // Snapshot of output below:

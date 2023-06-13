@@ -46,7 +46,7 @@ function get_test_cases() {
 }
 
 /**
- * Enqueue test script with before/after inline scripts.
+ * Enqueue test script.
  *
  * @param string   $handle    Dependency handle to enqueue.
  * @param string   $strategy  Strategy to use for dependency.
@@ -67,6 +67,18 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 	if ( 'blocking' !== $strategy ) {
 		wp_script_add_data( $handle, 'strategy', $strategy );
 	}
+}
+
+/**
+ * Enqueue test script with before/after inline scripts.
+ *
+ * @param string   $handle    Dependency handle to enqueue.
+ * @param string   $strategy  Strategy to use for dependency.
+ * @param string[] $deps      Dependencies for the script.
+ * @param bool     $in_footer Whether to print the script in the footer.
+ */
+function enqueue_test_script_with_inline_scripts( $handle, $strategy, $deps = [], $in_footer = false ) {
+	enqueue_test_script( $handle, $strategy, $deps, $in_footer );
 	add_test_inline_script( $handle, 'before' );
 	add_test_inline_script( $handle, 'after' );
 }

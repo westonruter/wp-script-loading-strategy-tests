@@ -2,9 +2,9 @@
 namespace ScriptLoadingStrategyTests;
 
 add_action( 'wp_enqueue_scripts', static function () {
-	enqueue_test_script( 'defer-dependency-with-blocking-following-dependency', 'defer', [] );
-	enqueue_test_script( 'blocking-dependency-with-defer-preceding-dependency', 'blocking', [] );
-	enqueue_test_script( 'defer-dependent-of-defer-and-blocking-dependencies', 'defer', [ 'defer-dependency-with-blocking-following-dependency', 'blocking-dependency-with-defer-preceding-dependency' ] );
+	enqueue_test_script_with_inline_scripts( 'defer-dependency-with-blocking-following-dependency', 'defer', [] );
+	enqueue_test_script_with_inline_scripts( 'blocking-dependency-with-defer-preceding-dependency', 'blocking', [] );
+	enqueue_test_script_with_inline_scripts( 'defer-dependent-of-defer-and-blocking-dependencies', 'defer', [ 'defer-dependency-with-blocking-following-dependency', 'blocking-dependency-with-defer-preceding-dependency' ] );
 } );
 
 // Snapshot of output below:

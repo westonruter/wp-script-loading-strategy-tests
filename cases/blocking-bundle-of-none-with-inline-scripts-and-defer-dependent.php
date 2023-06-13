@@ -10,7 +10,7 @@ add_action( 'wp_enqueue_scripts', static function () {
 
 	// Note: the before script for this will be blocking because the dependency is blocking.
 	// TODO: What if the bundle is actually marked as non-blocking?
-	enqueue_test_script( 'defer-dependent-of-blocking-bundle-of-none', 'defer', [ 'blocking-bundle-of-none' ] );
+	enqueue_test_script_with_inline_scripts( 'defer-dependent-of-blocking-bundle-of-none', 'defer', [ 'blocking-bundle-of-none' ] );
 } );
 
 // Snapshot of output below:

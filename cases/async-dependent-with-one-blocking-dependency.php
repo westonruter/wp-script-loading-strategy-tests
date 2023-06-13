@@ -2,8 +2,8 @@
 namespace ScriptLoadingStrategyTests;
 
 add_action( 'wp_enqueue_scripts', static function () {
-	enqueue_test_script( 'blocking-not-async-without-dependency', 'blocking', [] );
-	enqueue_test_script( 'async-with-blocking-dependency', 'async', [ 'blocking-not-async-without-dependency' ] );
+	enqueue_test_script_with_inline_scripts( 'blocking-not-async-without-dependency', 'blocking', [] );
+	enqueue_test_script_with_inline_scripts( 'async-with-blocking-dependency', 'async', [ 'blocking-not-async-without-dependency' ] );
 } );
 
 // Snapshot of output below:

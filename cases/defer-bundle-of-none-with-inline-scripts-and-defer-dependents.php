@@ -10,7 +10,7 @@ add_action( 'wp_enqueue_scripts', static function () {
 	add_test_inline_script( 'defer-bundle-of-none', 'after' );
 
 	// Note: the before script for this will be blocking because the dependency is blocking.
-	enqueue_test_script( 'defer-dependent-of-defer-bundle-of-none', 'defer', [ 'defer-bundle-of-none' ] );
+	enqueue_test_script_with_inline_scripts( 'defer-dependent-of-defer-bundle-of-none', 'defer', [ 'defer-bundle-of-none' ] );
 } );
 
 // Snapshot of output below:
