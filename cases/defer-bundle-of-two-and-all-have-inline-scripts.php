@@ -22,7 +22,7 @@ add_action( 'wp_enqueue_scripts', static function () {
 defer-bundle-of-two: before inline
 defer-bundle-of-two: after inline
 defer-bundle-member-one: before inline
-defer-bundle-member-one: script
+defer-bundle-member-one: script<?php /* Not executing here! */ echo PHP_EOL; ?>
 defer-bundle-member-one: after inline
 defer-bundle-member-two: before inline
 defer-bundle-member-two: script

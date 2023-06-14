@@ -26,6 +26,8 @@ namespace ScriptLoadingStrategyTests;
 
 const TEST_CASE_QUERY_ARG = 'test-case';
 
+const DISABLE_DELAYED_STRATEGIES_QUERY_ARG = 'disable-delayed-strategies';
+
 const CONTAINER_ELEMENT_ID = 'script-event-log';
 
 /**
@@ -64,7 +66,7 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 		),
 		$deps
 	);
-	if ( 'blocking' !== $strategy ) {
+	if ( 'blocking' !== $strategy && ! are_delayed_strategies_disabled() ) {
 		wp_script_add_data( $handle, 'strategy', $strategy );
 	}
 }
@@ -109,6 +111,15 @@ function is_test_enabled( $test_id ) {
 		&&
 		rest_sanitize_boolean( $_GET[ TEST_CASE_QUERY_ARG ][ $test_id ] )
 	);
+}
+
+/**
+ * Checks whether delayed strategies are disabled.
+ *
+ * @return bool Whether disabled.
+ */
+function are_delayed_strategies_disabled() {
+	return isset( $_GET[ DISABLE_DELAYED_STRATEGIES_QUERY_ARG ] ) && rest_sanitize_boolean( $_GET[ DISABLE_DELAYED_STRATEGIES_QUERY_ARG ] );
 }
 
 /**
@@ -377,6 +388,8 @@ add_action(
 					<?php if ( count( $enabled_tests ) === 1 ) : ?>
 					<?php endif; ?>
 					<a href="<?php echo esc_attr( esc_url( remove_query_arg( TEST_CASE_QUERY_ARG ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>">Enable all</a>
+					|
+					<a href="<?php echo esc_url( add_query_arg( DISABLE_DELAYED_STRATEGIES_QUERY_ARG, wp_json_encode( ! are_delayed_strategies_disabled() ) ) . '#' . CONTAINER_ELEMENT_ID ); ?>"><?php echo are_delayed_strategies_disabled() ? 'Enable delayed strategies' : 'Disable delayed strategies'; ?></a>
 				</p>
 			<?php endif; ?>
 			Test Results:
