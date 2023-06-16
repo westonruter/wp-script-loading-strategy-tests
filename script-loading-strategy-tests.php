@@ -360,8 +360,9 @@ add_action(
 				<?php endforeach; ?>
 				</ul>
 			</nav>
-			<?php if ( isset( $_GET[ TEST_CASE_QUERY_ARG ] ) ) : ?>
-				<p>
+
+			<p>
+				<?php if ( isset( $_GET[ TEST_CASE_QUERY_ARG ] ) ) : ?>
 					<?php
 					$all_tests     = array_keys( get_test_cases() );
 					$enabled_tests = get_enabled_tests();
@@ -389,9 +390,10 @@ add_action(
 					<?php endif; ?>
 					<a href="<?php echo esc_attr( esc_url( remove_query_arg( TEST_CASE_QUERY_ARG ) . '#' . CONTAINER_ELEMENT_ID ) ); ?>">Enable all</a>
 					|
-					<a href="<?php echo esc_url( add_query_arg( DISABLE_DELAYED_STRATEGIES_QUERY_ARG, wp_json_encode( ! are_delayed_strategies_disabled() ) ) . '#' . CONTAINER_ELEMENT_ID ); ?>"><?php echo are_delayed_strategies_disabled() ? 'Enable delayed strategies' : 'Disable delayed strategies'; ?></a>
-				</p>
-			<?php endif; ?>
+				<?php endif; ?>
+				<a href="<?php echo esc_url( add_query_arg( DISABLE_DELAYED_STRATEGIES_QUERY_ARG, wp_json_encode( ! are_delayed_strategies_disabled() ) ) . '#' . CONTAINER_ELEMENT_ID ); ?>"><?php echo are_delayed_strategies_disabled() ? 'Enable delayed strategies' : 'Disable delayed strategies'; ?></a>
+			</p>
+
 			Test Results:
 			<ol></ol>
 		</div>
