@@ -48,15 +48,15 @@ function get_test_cases() {
 }
 
 /**
- * Enqueue test script.
+ * Register test script.
  *
  * @param string   $handle    Dependency handle to enqueue.
  * @param string   $strategy  Strategy to use for dependency.
  * @param string[] $deps      Dependencies for the script.
  * @param bool     $in_footer Whether to print the script in the footer.
  */
-function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false ) {
-	wp_enqueue_script(
+function register_test_script( $handle, $strategy, $deps = [], $in_footer = false ) {
+	wp_register_script(
 		$handle,
 		add_query_arg(
 			[
@@ -71,6 +71,19 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 	if ( 'blocking' !== $strategy && ! are_delayed_strategies_disabled() ) {
 		wp_script_add_data( $handle, 'strategy', $strategy );
 	}
+}
+
+/**
+ * Enqueue test script.
+ *
+ * @param string   $handle    Dependency handle to enqueue.
+ * @param string   $strategy  Strategy to use for dependency.
+ * @param string[] $deps      Dependencies for the script.
+ * @param bool     $in_footer Whether to print the script in the footer.
+ */
+function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false ) {
+	register_test_script( $handle, $strategy, $deps, $in_footer );
+	wp_enqueue_script( $handle );
 }
 
 /**
