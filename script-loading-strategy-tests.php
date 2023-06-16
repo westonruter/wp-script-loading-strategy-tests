@@ -64,7 +64,9 @@ function enqueue_test_script( $handle, $strategy, $deps = [], $in_footer = false
 			],
 			plugin_dir_url( __FILE__ ) . 'external.js'
 		),
-		$deps
+		$deps,
+		null,
+		$in_footer
 	);
 	if ( 'blocking' !== $strategy && ! are_delayed_strategies_disabled() ) {
 		wp_script_add_data( $handle, 'strategy', $strategy );
